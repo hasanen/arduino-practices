@@ -1,14 +1,5 @@
 #include <FastLED.h>#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
-
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#include "U8glib.h"
 
 FASTLED_USING_NAMESPACE
 
@@ -50,6 +41,8 @@ const char *patternNames[] = {"rainbow", "rainbowWithGlitter", "confetti", "sine
 
 #define FRAMES_PER_SECOND  120
 
+U8GLIB_SSD1306_128X32 u8g(U8G_I2C_OPT_NONE);
+
 void setup() {
   Serial.begin (9600);
   Serial.println("=== SETUP START ===");
@@ -70,10 +63,8 @@ void setup() {
   lastLeftState = digitalRead(ROTARY_LEFT_PIN);
   lastRightState = digitalRead(ROTARY_RIGHT_PIN);
   buttonLastState = digitalRead(ROTARY_BUTTON_PIN);
+
   Serial.println("=== SETUP DONE ===");
-
-
-
 }
 
 
@@ -89,7 +80,10 @@ void loop()
 
   brightnessSelection();
   buttonListener();
-
+  u8g.firstPage();
+  do {
+    updateDisplay();
+  } while ( u8g.nextPage() );
 
   // Call the current pattern function once, updating the 'leds' array
   gPatterns[gCurrentPatternNumber]();
@@ -101,9 +95,9 @@ void loop()
   //  FastLED.delay(1000/FRAMES_PER_SECOND);
 
   // do some periodic updates
-    EVERY_N_MILLISECONDS( 20 ) {
-      gHue++;  // slowly cycle the "base color" through the rainbow
-    }
+  EVERY_N_MILLISECONDS( 20 ) {
+    gHue++;  // slowly cycle the "base color" through the rainbow
+  }
 
 }
 
@@ -181,7 +175,7 @@ void brightnessSelection() {
       } else {
         brightness = BRIGHTNESS_MIN;
       }
-      updateStatus();
+      updateDisplay();
     }
     if ( rotateRight()) {
       if (BRIGHTNESS_MAX >= (brightness + BRIGHTNESS_STEP)) {
@@ -189,7 +183,7 @@ void brightnessSelection() {
       } else {
         brightness = BRIGHTNESS_MAX;
       }
-      updateStatus();
+      updateDisplay();
     }
   }
   lastRightState = rightState;
@@ -208,7 +202,7 @@ void buttonListener() {
   int buttonState = digitalRead(ROTARY_BUTTON_PIN);
   if (buttonState != buttonLastState && buttonState == 1) {
     nextPattern();
-    updateStatus();
+    updateDisplay();
   }
   buttonLastState = buttonState;
 }
@@ -216,11 +210,14 @@ void buttonListener() {
 String currentPatternName() {
   return patternNames[gCurrentPatternNumber];
 }
-
-void updateStatus() {
-  Serial.print("Brightness: ");
-  Serial.println(brightness);
-  Serial.print("Pattern: ");
-  Serial.println(currentPatternName());
-
+void updateDisplay() {
+  u8g.setFont(u8g_font_6x10r);
+  u8g.setPrintPos(0, 8);
+  u8g.print("Brightness:");
+  u8g.setPrintPos(70, 8);
+  u8g.print(brightness);
+  u8g.setPrintPos(0, 16);
+  u8g.print("Pattern:");
+  u8g.setPrintPos(0, 24);
+  u8g.print(currentPatternName());
 }
