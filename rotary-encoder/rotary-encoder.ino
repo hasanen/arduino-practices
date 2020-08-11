@@ -175,7 +175,6 @@ void brightnessSelection() {
       } else {
         brightness = BRIGHTNESS_MIN;
       }
-      updateDisplay();
     }
     if ( rotateRight()) {
       if (BRIGHTNESS_MAX >= (brightness + BRIGHTNESS_STEP)) {
@@ -183,7 +182,6 @@ void brightnessSelection() {
       } else {
         brightness = BRIGHTNESS_MAX;
       }
-      updateDisplay();
     }
   }
   lastRightState = rightState;
@@ -202,7 +200,6 @@ void buttonListener() {
   int buttonState = digitalRead(ROTARY_BUTTON_PIN);
   if (buttonState != buttonLastState && buttonState == 1) {
     nextPattern();
-    updateDisplay();
   }
   buttonLastState = buttonState;
 }
